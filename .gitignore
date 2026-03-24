@@ -1,97 +1,128 @@
 # ===========================
-# Secrets & Credentials
+# Spring Boot / Java .gitignore
 # ===========================
-.env
-.env.*
-!.env.example
-**/secret.yml
-**/secret.properties
-secrets/
 
-# Spring Boot secret configs
-backend/src/main/resources/application-secret.yml
-backend/src/main/resources/application-secret.properties
-backend/src/main/resources/application-local.yml
-backend/src/main/resources/application-local.properties
-backend/src/main/resources/application-prod.yml
-backend/src/main/resources/application-prod.properties
+# -------
+# Compiled
+# -------
+*.class
+*.jar
+*.war
+*.ear
+*.nar
+*.zip
+*.tar.gz
+*.rar
 
-# ===========================
-# backend/ (Spring Boot)
-# ===========================
-backend/target/
-backend/.gradle/
-backend/build/
-backend/*.class
-backend/*.jar
-backend/*.war
-backend/.mvn/wrapper/maven-wrapper.jar
-backend/.mvn/timing.properties
+# -------
+# Build Tools
+# -------
 
 # Maven
-backend/pom.xml.tag
-backend/pom.xml.releaseBackup
-backend/pom.xml.versionsBackup
-backend/pom.xml.next
-backend/release.properties
-backend/dependency-reduced-pom.xml
-backend/buildNumber.properties
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+.mvn/timing.properties
+.mvn/wrapper/maven-wrapper.jar
 
-# ===========================
-# frontend/ (React)
-# ===========================
-frontend/node_modules/
-frontend/dist/
-frontend/build/
-frontend/.next/
-frontend/out/
-frontend/.cache/
-frontend/.parcel-cache/
+# Gradle
+.gradle/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+!**/src/main/**/build/
+!**/src/test/**/build/
+gradle-app.setting
+.gradletasknamecache
 
-frontend/npm-debug.log*
-frontend/yarn-debug.log*
-frontend/yarn-error.log*
-frontend/pnpm-debug.log*
-frontend/.pnpm-store/
-frontend/.npm
-frontend/.yarn/cache
-frontend/.yarn/unplugged
-frontend/.yarn/build-state.yml
-frontend/.yarn/install-state.gz
+# -------
+# IDEs
+# -------
 
-# ===========================
-# IDE & Editor
-# ===========================
+# IntelliJ IDEA
 .idea/
-!.idea/.gitignore
-*.iml
 *.iws
+*.iml
 *.ipr
+out/
+!**/src/main/**/out/
+!**/src/test/**/out/
 
+# Eclipse
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings/
+.springBeans
+.sts4-cache
+bin/
+!**/src/main/**/bin/
+!**/src/test/**/bin/
+
+# VS Code
 .vscode/
-!.vscode/extensions.json
-!.vscode/settings.json.example
 
-*.swp
-*.swo
-*~
+# NetBeans
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
 
-# ===========================
+# -------
+# Spring Boot
+# -------
+spring-shell.log
+application-local.yml
+application-local.properties
+
+# -------
+# Logs
+# -------
+logs/
+*.log
+*.log.*
+
+# -------
 # OS
-# ===========================
+# -------
+
+# macOS
 .DS_Store
-.DS_Store?
+.AppleDouble
+.LSOverride
 ._*
 .Spotlight-V100
 .Trashes
+
+# Windows
+Thumbs.db
 ehthumbs.db
 Desktop.ini
-Thumbs.db
+$RECYCLE.BIN/
 
-# ===========================
-# Logs & Temp
-# ===========================
-logs/
-*.log
-*.tmp
-*.temp
+# Linux
+*~
+
+# -------
+# Environment & Secrets
+# -------
+.env
+.env.*
+*.pem
+*.key
+*.p12
+*.jks
+secrets/
+
+# -------
+# Test & Coverage
+# -------
+/test-output/
+/coverage/
+*.exec
