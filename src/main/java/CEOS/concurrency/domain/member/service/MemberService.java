@@ -1,5 +1,7 @@
 package CEOS.concurrency.domain.member.service;
 
+import CEOS.concurrency.common.code.BusinessErrorCode;
+import CEOS.concurrency.common.exception.BusinessException;
 import CEOS.concurrency.common.jwt.JwtProvider;
 import CEOS.concurrency.domain.member.dto.LoginRequest;
 import CEOS.concurrency.domain.member.dto.LoginResponse;
@@ -27,6 +29,10 @@ public class MemberService {
 
     @Transactional
     public SignupResponse signup(SignupRequest request) {
+        if (memberRepository.findByNickname(request.nickname()).isPresent()) {
+            throw new BusinessException(BusinessErrorCode.DUPLICATE_NAME);
+        }
+
         Member member = Member.builder()
                 .nickname(request.nickname())
                 .password(passwordEncoder.encode(request.password()))
