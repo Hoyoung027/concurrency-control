@@ -21,8 +21,10 @@ dependencies {
 
 	// Web
 	implementation 'org.springframework.boot:spring-boot-starter-webmvc'
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+	testRuntimeOnly 'com.h2database:h2'
 
 	// DB
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
@@ -47,4 +49,8 @@ dependencies {
 
 tasks.named('test') {
 	useJUnitPlatform()
+	testLogging {
+		events "passed", "failed", "skipped"
+		showStandardStreams = true
+	}
 }
