@@ -8,4 +8,7 @@ public interface PaymentLogRepository extends JpaRepository<PaymentLog, Long> {
     long countByPaymentIdStartingWith(String prefix);
 
     boolean existsByStore_IdAndPaymentId(Long storeId, String paymentId);
+
+    java.util.Optional<PaymentLog> findByStore_IdAndPaymentId(Long storeId, String paymentId);
+
 }

@@ -34,4 +34,22 @@ public class PaymentController {
         return ResponseEntity.ok(Response.of(SuccessCode.CREATE_SUCCESS,
                 paymentService.requestPayment(storeUserDetails.getGithubId(), paymentId, request), "결제 처리 완료"));
     }
+
+    @PreAuthorize("hasRole('STORE')")
+    @PostMapping("/payments/{paymentId}/cancel")
+    public ResponseEntity<Response<PaymentResponse>> cancelPayment(
+            @AuthenticationPrincipal StoreUserDetails storeUserDetails,
+            @PathVariable String paymentId) {
+        return ResponseEntity.ok(Response.of(SuccessCode.DELETE_SUCCESS,
+                paymentService.cancelPayment(storeUserDetails.getGithubId(), paymentId), "결제 취소 완료"));
+    }
+
+    @PreAuthorize("hasRole('STORE')")
+    @PostMapping("/payments/{paymentId}")
+    public ResponseEntity<Response<PaymentResponse>> getPayment(
+            @AuthenticationPrincipal StoreUserDetails storeUserDetails,
+            @PathVariable String paymentId) {
+        return ResponseEntity.ok(Response.of(SuccessCode.GET_SUCCESS,
+                paymentService.getPayment(storeUserDetails.getGithubId(), paymentId), "결제 내역 조회"));
+    }
 }

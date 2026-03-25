@@ -6,6 +6,7 @@ import CEOS.concurrency.common.jwt.JwtProvider;
 import CEOS.concurrency.domain.payment.dto.InstantPaymentRequest;
 import CEOS.concurrency.domain.payment.dto.PaymentResponse;
 import CEOS.concurrency.domain.payment.dto.StoreResponse;
+import CEOS.concurrency.domain.payment.entity.PaymentLog;
 import CEOS.concurrency.domain.payment.entity.Store;
 import CEOS.concurrency.domain.payment.enums.PaymentStatus;
 import CEOS.concurrency.domain.payment.repository.PaymentLogRepository;
@@ -76,5 +77,34 @@ public class PaymentService {
         }
 
         return response;
+    }
+
+    @Transactional
+    public PaymentResponse cancelPayment(String githubId, String paymentId) {
+
+        Store store = storeRepository.findByGithubId(githubId)
+                .orElseThrow(() -> new BusinessException(BusinessErrorCode.STORE_NOT_FOUND));
+
+        PaymentLog paymentLog = paymentLogRepository.findByStore_IdAndPaymentId(store.getId(), paymentId)
+                .orElseThrow(() -> new BusinessException(BusinessErrorCode.PAYMENT_NOT_FOUND));
+
+        if (paymentLog.getStatus() != PaymentStatus.PAID) {
+            throw new BusinessException(BusinessErrorCode.PAYMENT_NOT_CANCELLABLE);
+        }
+
+        paymentLog.cancel();
+        return PaymentResponse.from(paymentLog);
+    }
+
+    @Transactional
+    public PaymentResponse getPayment(String githubId, String paymentId) {
+
+        Store store = storeRepository.findByGithubId(githubId)
+                .orElseThrow(() -> new BusinessException(BusinessErrorCode.STORE_NOT_FOUND));
+
+        PaymentLog paymentLog = paymentLogRepository.findByStore_IdAndPaymentId(store.getId(), paymentId)
+                .orElseThrow(() -> new BusinessException(BusinessErrorCode.PAYMENT_NOT_FOUND));
+
+        return PaymentResponse.from(paymentLog);
     }
 }

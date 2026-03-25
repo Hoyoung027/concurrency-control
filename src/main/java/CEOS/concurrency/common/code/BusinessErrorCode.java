@@ -17,6 +17,8 @@ public enum BusinessErrorCode implements Code {
     STORE_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 가맹점입니다."),
     STORE_ID_MISMATCH(HttpStatus.FORBIDDEN, "잘못된 storeId입니다."),
     DUPLICATE_PAYMENT_ID(HttpStatus.CONFLICT, "이미 존재하는 결제 ID입니다."),
+    PAYMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 결제 내역입니다."),
+    PAYMENT_NOT_CANCELLABLE(HttpStatus.CONFLICT, "취소할 수 없는 결제 상태입니다."),
     PAYMENT_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "결제 처리 중 오류가 발생했습니다."),
     INVALID_API_SECRET_KEY(HttpStatus.UNAUTHORIZED, "유효하지 않은 API Secret Key입니다."),
 

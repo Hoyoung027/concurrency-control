@@ -32,6 +32,9 @@ public class PaymentLog extends BaseEntity {
     private String orderName;
 
     @Column(nullable = false)
+    private String pgProvider;
+
+    @Column(nullable = false)
     private Long amount;
 
     @Enumerated(EnumType.STRING)
@@ -45,12 +48,17 @@ public class PaymentLog extends BaseEntity {
     @Column(nullable = false)
     private PaymentStatus status;
 
+    public void cancel() {
+        this.status = PaymentStatus.CANCELLED;
+    }
+
     @Builder
     public PaymentLog(String paymentId, Store store, String orderName,
                       Long amount, Currency currency, String customData, PaymentStatus status) {
         this.paymentId = paymentId;
         this.store = store;
         this.orderName = orderName;
+        this.pgProvider = "CEOS-PAY";
         this.amount = amount;
         this.currency = currency;
         this.customData = customData;
