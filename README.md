@@ -12,11 +12,11 @@ PortOne 결제 API를 참고하여 구성한 결제 서버입니다.
 
 결제는 항상 GitHub ID로 식별되는 가맹점 단위로 관리됩니다. 각 가맹점은 API Secret Key를 발급받아야 결제 API를 사용할 수 있습니다.
 
-| 항목 | 내용 |
-|------|------|
-| Base URL | `https://diggindie.com/ceos/` |
+| 항목 | 내용                                       |
+|------|------------------------------------------|
+| Base URL | `https://ceos.diggindie.com/`            |
 | 인증 방식 | `Authorization: Bearer {API_SECRET_KEY}` |
-| Content-Type | `application/json` |
+| Content-Type | `application/json`                       |
 
 ---
 
