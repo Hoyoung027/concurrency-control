@@ -2,13 +2,12 @@ package CEOS.concurrency.common.jwt;
 
 import CEOS.concurrency.common.exception.BusinessException;
 import CEOS.concurrency.domain.member.security.CustomUserDetailsService;
+import CEOS.concurrency.domain.payment.security.StoreUserDetailsService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -31,6 +30,7 @@ public class JwtFilter extends OncePerRequestFilter {
 
     private final JwtProvider jwtProvider;
     private final CustomUserDetailsService customUserDetailsService;
+    private final StoreUserDetailsService storeUserDetailsService;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -40,8 +40,8 @@ public class JwtFilter extends OncePerRequestFilter {
 
         if (StringUtils.hasText(token)) {
             try {
-                UUID uuid = jwtProvider.validateAndExtractUuid(token);
-                UserDetails userDetails = customUserDetailsService.loadByMemberUUID(uuid);
+                String subject = jwtProvider.validateAndExtractSubject(token);
+                UserDetails userDetails = resolveUserDetails(subject);
 
                 UsernamePasswordAuthenticationToken authentication =
                         new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
@@ -55,6 +55,16 @@ public class JwtFilter extends OncePerRequestFilter {
         }
 
         filterChain.doFilter(request, response);
+    }
+
+    private UserDetails resolveUserDetails(String subject) {
+        try {
+            UUID uuid = UUID.fromString(subject);
+            return customUserDetailsService.loadByMemberUUID(uuid);
+        } catch (IllegalArgumentException e) {
+            // subject가 UUID가 아니면 githubId (Store apiSecretKey)
+            return storeUserDetailsService.loadByGithubId(subject);
+        }
     }
 
     private String resolveToken(HttpServletRequest request) {

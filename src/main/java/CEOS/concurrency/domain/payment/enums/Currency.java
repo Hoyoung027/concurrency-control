@@ -1,15 +1,14 @@
-package CEOS.concurrency.common.enums;
+package CEOS.concurrency.domain.payment.enums;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
 @Getter
 @RequiredArgsConstructor
-public enum Role {
+public enum Currency {
 
-    USER("ROLE_USER"),
-    ADMIN("ROLE_ADMIN"),
-    STORE("ROLE_STORE");
+    KRW("KRW"),
+    USD("USD");
 
     private final String value;
 }

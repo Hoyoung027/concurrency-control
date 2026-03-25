@@ -33,11 +33,11 @@ public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
         if (jwtException != null) {
             BusinessErrorCode errorCode = jwtException.getBusinessErrorCode();
             response.setStatus(errorCode.getStatusCode());
-            body = Response.of(errorCode);
+            body = Response.error(errorCode, request.getRequestURI());
         } else {
             GeneralErrorCode errorCode = GeneralErrorCode.UNAUTHORIZED;
             response.setStatus(errorCode.getStatusCode());
-            body = Response.of(errorCode);
+            body = Response.error(errorCode, request.getRequestURI());
         }
 
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);

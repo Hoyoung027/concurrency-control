@@ -1,5 +1,6 @@
 package CEOS.concurrency.domain.member.entity;
 
+import CEOS.concurrency.common.entity.BaseEntity;
 import CEOS.concurrency.common.enums.CharacterType;
 import CEOS.concurrency.common.enums.Role;
 import jakarta.persistence.*;
@@ -16,7 +17,7 @@ import java.util.UUID;
 @Table(name = "member")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Member {
+public class Member extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
