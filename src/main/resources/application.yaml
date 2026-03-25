@@ -2,18 +2,19 @@ spring:
   application:
     name: concurrency
   datasource:
-    url: jdbc:mysql://localhost:3306/concurrency?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+    url: ${DB_URL}
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
-    driver-class-name: com.mysql.cj.jdbc.Driver
+    driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
-      ddl-auto: create-drop
+      ddl-auto: ${DDL_AUTO:update}
     show-sql: true
     properties:
       hibernate:
         format_sql: true
-        dialect: org.hibernate.dialect.MySQLDialect
+        jdbc:
+          time_zone: Asia/Seoul
 
 jwt:
   secret: ${JWT_SECRET}
