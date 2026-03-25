@@ -45,7 +45,7 @@ public class PaymentController {
     }
 
     @PreAuthorize("hasRole('STORE')")
-    @PostMapping("/payments/{paymentId}")
+    @GetMapping("/payments/{paymentId}")
     public ResponseEntity<Response<PaymentResponse>> getPayment(
             @AuthenticationPrincipal StoreUserDetails storeUserDetails,
             @PathVariable String paymentId) {
