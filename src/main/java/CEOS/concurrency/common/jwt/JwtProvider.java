@@ -44,11 +44,30 @@ public class JwtProvider {
         return buildToken(uuid, refreshExpiration);
     }
 
+    public String generateApiSecretKey(String githubId) {
+        Date now = new Date();
+        return Jwts.builder()
+                .subject(githubId)
+                .issuedAt(now)
+                .signWith(secretKey)
+                .compact();
+    }
+
     public UUID validateAndExtractUuid(String token) {
         try {
             return UUID.fromString(parseClaims(token).getSubject());
         } catch (ExpiredJwtException e) {
             throw new BusinessException(BusinessErrorCode.TOKEN_EXPIRED);
+        } catch (MalformedJwtException | UnsupportedJwtException | SignatureException e) {
+            throw new BusinessException(BusinessErrorCode.TOKEN_MALFORMED);
+        } catch (JwtException | IllegalArgumentException e) {
+            throw new BusinessException(BusinessErrorCode.TOKEN_INVALID);
+        }
+    }
+
+    public String validateAndExtractSubject(String token) {
+        try {
+            return parseClaims(token).getSubject();
         } catch (MalformedJwtException | UnsupportedJwtException | SignatureException e) {
             throw new BusinessException(BusinessErrorCode.TOKEN_MALFORMED);
         } catch (JwtException | IllegalArgumentException e) {
