@@ -23,6 +23,7 @@ import java.util.stream.Collectors;
 public class ItemService {
 
     public static final Long ITEM_ID = 1L;
+    public static final int INITIAL_QUANTITY = 1000;
 
     private final ItemRepository itemRepository;
     private final PurchaseLogRepository purchaseLogRepository;
@@ -61,5 +62,12 @@ public class ItemService {
         purchaseLogRepository.save(PurchaseLog.builder().item(item).member(member).build());
         item.decreaseQuantity();
         return PurchaseResponse.from(item);
+    }
+
+    @Transactional
+    public void reset() {
+        purchaseLogRepository.deleteAll();
+        itemRepository.deleteAll();
+        itemRepository.insertItemWithId(INITIAL_QUANTITY);
     }
 }

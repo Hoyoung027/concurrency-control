@@ -28,4 +28,10 @@ public class ItemController {
     public ResponseEntity<Response<PurchaseResponse>> purchase(@AuthenticationPrincipal CustomUserDetails userDetails) {
         return ResponseEntity.ok(Response.of(SuccessCode.OK, itemService.purchase(userDetails.getUuid()), "상품 구매 API"));
     }
+
+    @PostMapping("/market/item/reset")
+    public ResponseEntity<Response<Void>> reset() {
+        itemService.reset();
+        return ResponseEntity.ok(Response.of(SuccessCode.OK, null, "초기화 API"));
+    }
 }

@@ -2,6 +2,7 @@ package CEOS.concurrency.domain.market;
 
 import CEOS.concurrency.domain.market.entity.Item;
 import CEOS.concurrency.domain.market.repository.ItemRepository;
+import CEOS.concurrency.domain.market.service.ItemService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
@@ -11,7 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class DataInitializer implements CommandLineRunner {
 
-    private static final int INITIAL_QUANTITY = 1000;
+    private static final int INITIAL_QUANTITY = ItemService.INITIAL_QUANTITY;
 
     private final ItemRepository itemRepository;
 
