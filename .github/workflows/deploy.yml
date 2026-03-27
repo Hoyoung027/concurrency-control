@@ -51,6 +51,7 @@ jobs:
             DB_PASSWORD=${{ secrets.DB_PASSWORD }}
             JWT_SECRET=${{ secrets.JWT_SECRET }}
             DDL_AUTO=${{ secrets.DDL_AUTO }}
+            COOKIE_SECURE=true
             EOF
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
             docker-compose pull

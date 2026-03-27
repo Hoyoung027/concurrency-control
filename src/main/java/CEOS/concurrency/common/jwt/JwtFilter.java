@@ -5,6 +5,7 @@ import CEOS.concurrency.domain.member.security.CustomUserDetailsService;
 import CEOS.concurrency.domain.payment.security.StoreUserDetailsService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -71,6 +72,14 @@ public class JwtFilter extends OncePerRequestFilter {
         String bearer = request.getHeader(AUTHORIZATION_HEADER);
         if (StringUtils.hasText(bearer) && bearer.startsWith(BEARER_PREFIX)) {
             return bearer.substring(BEARER_PREFIX.length());
+        }
+        Cookie[] cookies = request.getCookies();
+        if (cookies != null) {
+            for (Cookie cookie : cookies) {
+                if ("access_token".equals(cookie.getName())) {
+                    return cookie.getValue();
+                }
+            }
         }
         return null;
     }

@@ -68,6 +68,8 @@ public class JwtProvider {
     public String validateAndExtractSubject(String token) {
         try {
             return parseClaims(token).getSubject();
+        } catch (ExpiredJwtException e) {
+            throw new BusinessException(BusinessErrorCode.TOKEN_EXPIRED);
         } catch (MalformedJwtException | UnsupportedJwtException | SignatureException e) {
             throw new BusinessException(BusinessErrorCode.TOKEN_MALFORMED);
         } catch (JwtException | IllegalArgumentException e) {
