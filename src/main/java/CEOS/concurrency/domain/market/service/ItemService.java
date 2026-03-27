@@ -3,11 +3,13 @@ package CEOS.concurrency.domain.market.service;
 import CEOS.concurrency.common.code.BusinessErrorCode;
 import CEOS.concurrency.common.exception.BusinessException;
 import CEOS.concurrency.domain.market.dto.ItemResponse;
+import java.util.List;
 import CEOS.concurrency.domain.market.dto.PurchaseResponse;
+import CEOS.concurrency.domain.market.dto.StatResponse;
 import CEOS.concurrency.domain.market.entity.Item;
-import CEOS.concurrency.domain.market.entity.PurchaseLog;
+import CEOS.concurrency.domain.market.entity.Order;
 import CEOS.concurrency.domain.market.repository.ItemRepository;
-import CEOS.concurrency.domain.market.repository.PurchaseLogRepository;
+import CEOS.concurrency.domain.market.repository.OrderRepository;
 import CEOS.concurrency.domain.member.entity.Member;
 import CEOS.concurrency.domain.member.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
@@ -26,48 +28,64 @@ public class ItemService {
     public static final int INITIAL_QUANTITY = 1000;
 
     private final ItemRepository itemRepository;
-    private final PurchaseLogRepository purchaseLogRepository;
+    private final OrderRepository orderRepository;
     private final MemberRepository memberRepository;
 
     @Transactional(readOnly = true)
-    public ItemResponse getItem() {
-        Item item = itemRepository.findById(ITEM_ID)
+    public List<ItemResponse> getItems() {
+        return itemRepository.findAll().stream()
+                .map(ItemResponse::fromItem)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public ItemResponse getItem(Long itemId) {
+        Item item = itemRepository.findById(itemId)
                 .orElseThrow(() -> new BusinessException(BusinessErrorCode.ITEM_NOT_FOUND));
 
-        long purchaseAttempts = purchaseLogRepository.countByItem(item);
+        return ItemResponse.fromItem(item);
+    }
 
-        Map<String, Long> purchaseAttemptsByMember = purchaseLogRepository
-                .countByItemGroupByMember(item)
+    @Transactional(readOnly = true)
+    public StatResponse getStat() {
+
+        long purchaseAttempts = orderRepository.count();
+
+        Map<String, Long> purchaseAttemptsByMember = orderRepository
+                .countGroupByMember()
                 .stream()
                 .collect(Collectors.toMap(
                         row -> (String) row[0],
                         row -> (Long) row[1]
                 ));
 
-        return ItemResponse.from(item, purchaseAttempts, purchaseAttemptsByMember);
+        return new StatResponse(purchaseAttempts, purchaseAttemptsByMember);
     }
 
     @Transactional
-    public PurchaseResponse purchase(UUID memberUuid) {
-        Item item = itemRepository.findById(ITEM_ID)
+    public PurchaseResponse purchase(Long itemId, UUID memberUuid) {
+        Item item = itemRepository.findById(itemId)
                 .orElseThrow(() -> new BusinessException(BusinessErrorCode.ITEM_NOT_FOUND));
-
-        if (item.getQuantity() <= 0) {
-            throw new BusinessException(BusinessErrorCode.OUT_OF_STOCK);
-        }
 
         Member member = memberRepository.findByUuid(memberUuid)
                 .orElseThrow(() -> new BusinessException(BusinessErrorCode.MEMBER_NOT_FOUND));
 
-        purchaseLogRepository.save(PurchaseLog.builder().item(item).member(member).build());
-        item.decreaseQuantity();
-        return PurchaseResponse.from(item);
+        try {
+            Thread.sleep(100);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+
+        item.decreaseStock();
+        orderRepository.save(Order.builder().item(item).member(member).build());
+        return PurchaseResponse.from(item, member);
     }
 
     @Transactional
     public void reset() {
-        purchaseLogRepository.deleteAll();
+        orderRepository.deleteAll();
         itemRepository.deleteAll();
         itemRepository.insertItemWithId(INITIAL_QUANTITY);
+
     }
 }

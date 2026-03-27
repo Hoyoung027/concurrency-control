@@ -8,11 +8,14 @@ public record ItemResponse(
         Long id,
         String name,
         int price,
-        int quantity,
-        long purchaseAttempts,
-        Map<String, Long> purchaseAttemptsByMember
+        int stock
 ) {
-    public static ItemResponse from(Item item, long purchaseAttempts, Map<String, Long> purchaseAttemptsByMember) {
-        return new ItemResponse(item.getId(), item.getName(), item.getPrice(), item.getQuantity(), purchaseAttempts, purchaseAttemptsByMember);
+    public static ItemResponse fromItem(Item item) {
+        return new ItemResponse(
+                item.getId(),
+                item.getName(),
+                item.getPrice(),
+                item.getStock()
+        );
     }
 }
