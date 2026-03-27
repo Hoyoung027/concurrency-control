@@ -3,7 +3,7 @@ package CEOS.concurrency.domain.market.service;
 import CEOS.concurrency.common.enums.CharacterType;
 import CEOS.concurrency.domain.market.entity.Item;
 import CEOS.concurrency.domain.market.repository.ItemRepository;
-import CEOS.concurrency.domain.market.repository.PurchaseLogRepository;
+import CEOS.concurrency.domain.market.repository.OrderRepository;
 import CEOS.concurrency.domain.member.entity.Member;
 import CEOS.concurrency.domain.member.repository.MemberRepository;
 import org.junit.jupiter.api.BeforeAll;
@@ -35,7 +35,7 @@ class ItemServiceConcurrencyTest {
     @Autowired private ItemService itemService;
     @Autowired private ItemRepository itemRepository;
     @Autowired private MemberRepository memberRepository;
-    @Autowired private PurchaseLogRepository purchaseLogRepository;
+    @Autowired private OrderRepository orderRepository;
     @Autowired private JdbcTemplate jdbcTemplate;
 
     private final List<UUID> memberUuids = new ArrayList<>();
@@ -55,8 +55,8 @@ class ItemServiceConcurrencyTest {
 
     @BeforeEach
     void resetItem() {
-        purchaseLogRepository.deleteAll();
-        jdbcTemplate.update("UPDATE item SET quantity = 100 WHERE id = 1");
+        orderRepository.deleteAll();
+        jdbcTemplate.update("UPDATE item SET stock = 100 WHERE id = 1");
     }
 
     @Test
@@ -74,7 +74,7 @@ class ItemServiceConcurrencyTest {
             executor.submit(() -> {
                 try {
                     startLatch.await(); // 모든 스레드가 준비될 때까지 대기
-                    itemService.purchase(uuid);
+                    itemService.purchase(ItemService.ITEM_ID, uuid);
                     successCount.incrementAndGet();
                 } catch (Exception e) {
                     failCount.incrementAndGet();
@@ -91,17 +91,17 @@ class ItemServiceConcurrencyTest {
 
         // then
         Item item = itemRepository.findById(ItemService.ITEM_ID).orElseThrow();
-        int remainingQuantity = item.getQuantity();
+        int remainingStock = item.getStock();
 
         System.out.println("=== 동시성 테스트 결과 ===");
         System.out.println("구매 성공: " + successCount.get() + "건");
         System.out.println("구매 실패: " + failCount.get() + "건");
-        System.out.println("최종 재고: " + remainingQuantity + "개");
+        System.out.println("최종 재고: " + remainingStock + "개");
         System.out.println("기대 재고: 0개 (100개 재고, 100명 구매)");
-        System.out.println("재고 손실: " + remainingQuantity + "개 (감소됐어야 하는데 누락된 횟수)");
+        System.out.println("재고 손실: " + remainingStock + "개 (감소됐어야 하는데 누락된 횟수)");
 
         // 동시성 문제가 없다면 성공 건수 + 잔여 재고 = 100 이어야 함
         // 동시성 문제가 있다면 잔여 재고가 0보다 크게 남음 (Lost Update)
-        assertThat(remainingQuantity).isEqualTo(0);
+        assertThat(remainingStock).isEqualTo(0);
     }
 }

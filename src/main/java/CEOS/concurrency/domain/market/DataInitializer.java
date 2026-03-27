@@ -20,11 +20,11 @@ public class DataInitializer implements CommandLineRunner {
     @Transactional
     public void run(String... args) {
         itemRepository.findById(1L).ifPresentOrElse(
-                item -> item.resetQuantity(INITIAL_QUANTITY),
+                item -> item.resetStock(INITIAL_QUANTITY),
                 () -> itemRepository.save(Item.builder()
                         .name("ChatGPT Pro 50% 할인 이용권")
                         .price(10000)
-                        .quantity(INITIAL_QUANTITY)
+                        .stock(INITIAL_QUANTITY)
                         .build())
         );
     }

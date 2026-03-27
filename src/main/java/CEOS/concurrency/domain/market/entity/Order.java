@@ -9,10 +9,10 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "purchase_log")
+@Table(name = "orders")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class PurchaseLog extends BaseEntity {
+public class Order extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -27,7 +27,7 @@ public class PurchaseLog extends BaseEntity {
     private Member member;
 
     @Builder
-    public PurchaseLog(Item item, Member member) {
+    public Order(Item item, Member member) {
         this.item = item;
         this.member = member;
     }

@@ -1,6 +1,8 @@
 package CEOS.concurrency.domain.market.entity;
 
+import CEOS.concurrency.common.code.BusinessErrorCode;
 import CEOS.concurrency.common.entity.BaseEntity;
+import CEOS.concurrency.common.exception.BusinessException;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -24,20 +26,23 @@ public class Item extends BaseEntity {
     private int price;
 
     @Column(nullable = false)
-    private int quantity;
+    private int stock;
 
     @Builder
-    public Item(String name, int price, int quantity) {
+    public Item(String name, int price, int stock) {
         this.name = name;
         this.price = price;
-        this.quantity = quantity;
+        this.stock = stock;
     }
 
-    public void decreaseQuantity() {
-        this.quantity -= 1;
+    public void decreaseStock() {
+        if (this.stock <= 0) {
+            throw new BusinessException(BusinessErrorCode.OUT_OF_STOCK);
+        }
+        this.stock -= 1;
     }
 
-    public void resetQuantity(int quantity) {
-        this.quantity = quantity;
+    public void resetStock(int stock) {
+        this.stock = stock;
     }
 }
