@@ -59,7 +59,7 @@ public class SecurityConfig {
         config.setAllowedOriginPatterns(
                 List.of(
                         "http://localhost:3000",
-                        "https://concurrency-control-front-5b5e54qkm-hoyoungs-projects-c44a1ff0.vercel.app"
+                        "https://concurrency-control-front.vercel.app"
                 )
         );
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
