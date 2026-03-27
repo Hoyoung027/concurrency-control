@@ -75,9 +75,9 @@ public class MemberService {
         String refreshToken = jwtProvider.generateRefreshToken(uuid);
 
         ResponseCookie accessCookie = ResponseCookie.from("access_token", accessToken)
-                .httpOnly(true).secure(cookieSecure).path("/").maxAge(accessExpiration / 1000).sameSite("None").build();
+                .httpOnly(true).secure(cookieSecure).path("/").maxAge(accessExpiration / 1000).sameSite("Lax").build();
         ResponseCookie refreshCookie = ResponseCookie.from("refresh_token", refreshToken)
-                .httpOnly(true).secure(cookieSecure).path("/").maxAge(refreshExpiration / 1000).sameSite("None").build();
+                .httpOnly(true).secure(cookieSecure).path("/").maxAge(refreshExpiration / 1000).sameSite("Lax").build();
 
         response.addHeader(HttpHeaders.SET_COOKIE, accessCookie.toString());
         response.addHeader(HttpHeaders.SET_COOKIE, refreshCookie.toString());

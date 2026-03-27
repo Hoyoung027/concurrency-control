@@ -59,7 +59,8 @@ public class SecurityConfig {
         config.setAllowedOriginPatterns(
                 List.of(
                         "http://localhost:3000",
-                        "https://concurrency-control-front.vercel.app"
+                        "https://concurrency-control-front.vercel.app",
+                        "https://ceos-front.diggindie.com"
                 )
         );
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
