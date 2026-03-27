@@ -60,7 +60,11 @@ export function setup() {
       continue;
     }
 
-    const accessToken = loginRes.json('payload.accessToken');
+    const accessToken = loginRes.cookies['access_token'] ? loginRes.cookies['access_token'][0].value : null;
+    if (!accessToken) {
+      console.error(`access_token 쿠키 없음 [${i}]`);
+      continue;
+    }
     tokens.push(accessToken);
   }
 
@@ -75,7 +79,7 @@ export default function (data) {
   const res = http.post(
     `${BASE_URL}/market/item/purchase`,
     null,
-    { headers: { Authorization: `Bearer ${token}` } }
+    { headers: { Cookie: `access_token=${token}` } }
   );
 
   const success = check(res, {
@@ -92,7 +96,7 @@ export default function (data) {
 // 테스트 종료 후 1회 실행 - 결과 요약
 export function teardown(data) {
   const res = http.get(`${BASE_URL}/market/item`, {
-    headers: { Authorization: `Bearer ${data.tokens[0]}` },
+    headers: { Cookie: `access_token=${data.tokens[0]}` },
   });
   if (res.status !== 200) {
     console.error(`상품 조회 실패: status=${res.status} body=${res.body}`);
