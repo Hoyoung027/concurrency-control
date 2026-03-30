@@ -8,6 +8,6 @@ import java.util.List;
 
 public interface OrderRepository extends JpaRepository<Order, Long> {
 
-    @Query("SELECT o.member.nickname, COUNT(o) FROM Order o GROUP BY o.member")
+    @Query("SELECT o.member.nickname, o.member.characterType, COUNT(o) FROM Order o GROUP BY o.member")
     List<Object[]> countGroupByMember();
 }
