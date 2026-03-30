@@ -2,6 +2,7 @@ package CEOS.concurrency.domain.market.service;
 
 import CEOS.concurrency.common.code.BusinessErrorCode;
 import CEOS.concurrency.common.exception.BusinessException;
+import CEOS.concurrency.common.enums.CharacterType;
 import CEOS.concurrency.domain.market.dto.ItemResponse;
 import java.util.List;
 import CEOS.concurrency.domain.market.dto.PurchaseResponse;
@@ -55,8 +56,8 @@ public class ItemService {
                 .countGroupByMember()
                 .stream()
                 .collect(Collectors.toMap(
-                        row -> (String) row[0],
-                        row -> (Long) row[1]
+                        row -> ((CharacterType) row[1]).getEmoji() + " " + (String) row[0],
+                        row -> (Long) row[2]
                 ));
 
         return new StatResponse(purchaseAttempts, purchaseAttemptsByMember);
@@ -75,8 +76,10 @@ public class ItemService {
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
+        synchronized(this){
+            item.decreaseStock();
+        }
 
-        item.decreaseStock();
         orderRepository.save(Order.builder().item(item).member(member).build());
         return PurchaseResponse.from(item, member);
     }
