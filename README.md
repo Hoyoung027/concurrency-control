@@ -38,9 +38,9 @@ PortOne 결제 API를 참고하여 구성한 결제 서버입니다.
 
 ```json
 {
-  "code": 200,
+  "status": 200,
   "message": "결제용 API Secret 조회",
-  "data": {
+  "payload": {
     "githubId": "Hoyoung027",
     "apiSecretKey": "eyJhbGci...",
     "createdAt": "2026-02-07T02:07:00"
@@ -86,13 +86,13 @@ PortOne 결제 API를 참고하여 구성한 결제 서버입니다.
 }
 ```
 
-**Response `200 OK`**
+**Response `201 Created`**
 
 ```json
 {
-  "code": 200,
+  "status": 201,
   "message": "결제 처리 완료",
-  "data": {
+  "payload": {
     "paymentId": "20251022_0001",
     "paymentStatus": "PAID",
     "orderName": "노트북 구매",
@@ -133,9 +133,9 @@ PortOne 결제 API를 참고하여 구성한 결제 서버입니다.
 
 ```json
 {
-  "code": 200,
+  "status": 200,
   "message": "결제 취소 완료",
-  "data": {
+  "payload": {
     "paymentId": "20251022_0001",
     "paymentStatus": "CANCELLED",
     "orderName": "노트북 구매",
@@ -175,9 +175,9 @@ PortOne 결제 API를 참고하여 구성한 결제 서버입니다.
 
 ```json
 {
-  "code": 200,
+  "status": 200,
   "message": "결제 내역 조회",
-  "data": {
+  "payload": {
     "paymentId": "20251022_0001",
     "paymentStatus": "PAID | FAILED | CANCELLED",
     "orderName": "노트북 구매",
