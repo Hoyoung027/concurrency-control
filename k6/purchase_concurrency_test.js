@@ -1,135 +1,131 @@
-/**
- * 동시성 문제 검증 테스트 - k6
- *
- * [설치]
- *   Mac  : brew install k6
- *   Linux: sudo snap install k6
- *   기타  : https://grafana.com/docs/k6/latest/set-up/install-k6/
- *
- * [실행] 프로젝트 루트에서:
- *   k6 run k6/purchase_concurrency_test.js
- *
- * [전제 조건]
- *   - 서버가 localhost:8080 에서 실행 중이어야 함
- *   - DataInitializer의 INITIAL_QUANTITY와 아래 값을 맞춰야 함
- */
-
+/** 실행 방법과 결과 해석: k6/README.md */
 import http from 'k6/http';
 import { check } from 'k6';
+import { Counter } from 'k6/metrics';
 
-const BASE_URL = 'http://localhost:8080';
-const USERS_COUNT = 10;
-const REQUESTS_PER_USER = 50;
-const INITIAL_QUANTITY = 1000; // DataInitializer.INITIAL_QUANTITY와 동일하게 맞출 것
+function positiveInteger(name, fallback) {
+  const value = Number(__ENV[name] || fallback);
+  if (!Number.isSafeInteger(value) || value < 1) {
+    throw new Error(`${name}은 양의 정수여야 합니다.`);
+  }
+  return value;
+}
+
+const BASE_URL = (__ENV.BASE_URL || 'http://localhost:8080').replace(/\/+$/, '');
+const USERS_COUNT = positiveInteger('USERS_COUNT', 10);
+const REQUESTS_PER_USER = positiveInteger('REQUESTS_PER_USER', 50);
+const ITEM_ID = positiveInteger('ITEM_ID', 1);
+const TOTAL_REQUESTS = USERS_COUNT * REQUESTS_PER_USER;
 const CHARACTER_TYPES = ['CAT', 'DOG', 'RABBIT', 'DEER', 'LION', 'FOX', 'BEAR', 'PENGUIN', 'HAMSTER', 'FROG'];
+const purchaseRequests = new Counter('purchase_requests');
+const purchaseSuccess = new Counter('purchase_success');
+const purchaseOutOfStock = new Counter('purchase_out_of_stock');
 
 export const options = {
-  vus: USERS_COUNT,                            // 동시 사용자 10명
-  iterations: USERS_COUNT * REQUESTS_PER_USER, // 총 500번 (VU당 50번)
+  scenarios: {
+    purchase: {
+      executor: 'per-vu-iterations',
+      vus: USERS_COUNT,
+      iterations: REQUESTS_PER_USER,
+      maxDuration: __ENV.MAX_DURATION || '10m',
+    },
+  },
+  setupTimeout: '5m',
+  thresholds: {
+    checks: ['rate==1'],
+    http_req_failed: ['rate==0'],
+    purchase_requests: [`count==${TOTAL_REQUESTS}`],
+  },
 };
 
-// 테스트 시작 전 1회 실행 - 유저 생성 & 로그인해서 토큰 수집
+function params(token, name) {
+  return {
+    headers: {
+      'Content-Type': 'application/json',
+      'ngrok-skip-browser-warning': 'true',
+      ...(token ? { Cookie: `access_token=${token}` } : {}),
+    },
+    tags: { name },
+    timeout: '30s',
+    redirects: 0,
+  };
+}
+
+function requireOk(res, label) {
+  if (!check(res, { [label]: (r) => r.status === 200 })) {
+    throw new Error(`${label}: HTTP ${res.status}`);
+  }
+}
+
+function snapshot(token) {
+  const itemRes = http.get(`${BASE_URL}/market/item?itemId=${ITEM_ID}`, params(token, 'get_item'));
+  requireOk(itemRes, '상품 조회 성공');
+  const statRes = http.get(`${BASE_URL}/market/stats`, params(token, 'get_stats'));
+  requireOk(statRes, '통계 조회 성공');
+  const item = itemRes.json('payload');
+  const stats = statRes.json('payload');
+  if (!item || !Number.isSafeInteger(item.stock) || item.stock < 0 ||
+      !stats || !Number.isSafeInteger(stats.purchaseAttempts) || stats.purchaseAttempts < 0) {
+    check(false, { '조회 응답 형식 정상': (valid) => valid });
+    throw new Error('stock 또는 purchaseAttempts 응답이 올바르지 않습니다.');
+  }
+  return { stock: item.stock, orders: stats.purchaseAttempts };
+}
+
 export function setup() {
   const tokens = [];
-
-  const suffix = String(Date.now()).slice(-6); // 타임스탬프 끝 6자리로 중복 방지
+  const suffix = `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
   for (let i = 0; i < USERS_COUNT; i++) {
-    const nickname = `k6u${i}_${suffix}`; // 최대 12자 (20자 제한 이내)
+    const nickname = `k6${i.toString(36)}_${suffix}`;
     const password = 'password123';
-    const characterType = CHARACTER_TYPES[i % CHARACTER_TYPES.length];
-
-    const signupRes = http.post(
-      `${BASE_URL}/auth/signup`,
-      JSON.stringify({ nickname, password, characterType }),
-      { headers: { 'Content-Type': 'application/json' } }
-    );
-
-    if (signupRes.status !== 200) {
-      console.error(`signup 실패 [${i}]: ${signupRes.status} ${signupRes.body}`);
-      continue;
-    }
-
-    const loginRes = http.post(
-      `${BASE_URL}/auth/login`,
-      JSON.stringify({ nickname, password }),
-      { headers: { 'Content-Type': 'application/json' } }
-    );
-
-    if (loginRes.status !== 200) {
-      console.error(`login 실패 [${i}]: ${loginRes.status} ${loginRes.body}`);
-      continue;
-    }
-
-    const accessToken = loginRes.cookies['access_token'] ? loginRes.cookies['access_token'][0].value : null;
-    if (!accessToken) {
-      console.error(`access_token 쿠키 없음 [${i}]`);
-      continue;
-    }
-    tokens.push(accessToken);
+    // 가입/로그인 때 이전 사용자의 쿠키가 섞이지 않도록 초기화합니다.
+    http.cookieJar().clear(BASE_URL);
+    const signupRes = http.post(`${BASE_URL}/auth/signup`, JSON.stringify({
+      nickname, password, characterType: CHARACTER_TYPES[i % CHARACTER_TYPES.length],
+    }), params(null, 'signup'));
+    requireOk(signupRes, '회원 가입 성공');
+    const loginRes = http.post(`${BASE_URL}/auth/login`, JSON.stringify({ nickname, password }), params(null, 'login'));
+    requireOk(loginRes, '로그인 성공');
+    const cookies = loginRes.cookies.access_token;
+    const token = cookies && cookies[0] && cookies[0].value;
+    if (!token) throw new Error(`사용자 ${i}: access_token 쿠키가 없습니다.`);
+    tokens.push(token);
   }
-
-  console.log(`준비 완료: ${tokens.length}명 로그인`);
-  return { tokens };
+  http.cookieJar().clear(BASE_URL);
+  const before = snapshot(tokens[0]);
+  if (before.stock === 0) throw new Error('재고가 0입니다. 테스트할 재고를 준비한 뒤 다시 실행하세요.');
+  console.log(`준비 완료: ${BASE_URL}, 상품 ${ITEM_ID}, ${USERS_COUNT}명 × ${REQUESTS_PER_USER}회, 시작 재고 ${before.stock}`);
+  return { tokens, before };
 }
 
-// 각 VU가 50번씩 구매 요청
 export default function (data) {
-  const token = data.tokens[(__VU - 1) % data.tokens.length];
-
-  const res = http.post(
-    `${BASE_URL}/market/item/purchase`,
-    null,
-    { headers: { Cookie: `access_token=${token}` } }
-  );
-
-  const success = check(res, {
-    '구매 성공 (200)': (r) => r.status === 200,
-    '재고 부족 (409)': (r) => r.status === 409,
-  });
-
-  // 200도 409도 아닌 예상 밖 응답은 출력
-  if (res.status !== 200 && res.status !== 409) {
-    console.error(`예상 밖 응답 [VU ${__VU}]: status=${res.status} body=${res.body}`);
+  const token = data.tokens[__VU - 1];
+  const requestParams = params(token, 'purchase');
+  requestParams.responseCallback = http.expectedStatuses(200, 409);
+  const res = http.post(`${BASE_URL}/market/item/purchase?itemId=${ITEM_ID}`, null, requestParams);
+  purchaseRequests.add(1);
+  purchaseSuccess.add(res.status === 200 ? 1 : 0);
+  purchaseOutOfStock.add(res.status === 409 ? 1 : 0);
+  if (!check(res, { '구매 응답 정상 (200 또는 409)': (r) => r.status === 200 || r.status === 409 })) {
+    console.error(`예상 밖 구매 응답: VU=${__VU}, HTTP ${res.status}`);
   }
 }
 
-// 테스트 종료 후 1회 실행 - 결과 요약
 export function teardown(data) {
-  const res = http.get(`${BASE_URL}/market/item`, {
-    headers: { Cookie: `access_token=${data.tokens[0]}` },
+  const after = snapshot(data.tokens[0]);
+  const ordersCreated = after.orders - data.before.orders;
+  const decreased = data.before.stock - after.stock;
+  const difference = ordersCreated - decreased;
+  const expectedOrders = Math.min(data.before.stock, TOTAL_REQUESTS);
+
+  console.log(`설정한 구매 요청: ${TOTAL_REQUESTS}건`);
+  console.log(`생성된 주문: ${ordersCreated}건 (기대: ${expectedOrders}건)`);
+  console.log(`재고: ${data.before.stock} → ${after.stock}, 실제 감소: ${decreased}개`);
+  console.log(`주문 수 - 재고 감소량: ${difference} (양수이면 재고 감소 유실 또는 초과 판매 가능)`);
+
+  check({ ordersCreated, decreased, after }, {
+    '주문 수와 재고 감소량 일치': (r) => r.ordersCreated === r.decreased,
+    '기대 주문 수 일치': (r) => r.ordersCreated === expectedOrders,
+    '기대 잔여 재고 일치': (r) => r.after.stock === data.before.stock - expectedOrders,
   });
-  if (res.status !== 200) {
-    console.error(`상품 조회 실패: status=${res.status} body=${res.body}`);
-    return;
-  }
-
-  const item = res.json('payload');
-  const decreased = INITIAL_QUANTITY - item.quantity;
-  const lostUpdates = item.purchaseAttempts - decreased;
-  const totalRequested = USERS_COUNT * REQUESTS_PER_USER;
-
-  console.log('\n========================================');
-  console.log('            동시성 테스트 결과            ');
-  console.log('========================================');
-  console.log(`총 요청 수      : ${totalRequested}건`);
-  console.log(`구매 성공 건수  : ${item.purchaseAttempts}건`);
-  console.log(`재고 초기값     : ${INITIAL_QUANTITY}개`);
-  console.log(`잔여 재고       : ${item.quantity}개`);
-  console.log(`실제 감소 수    : ${decreased}개`);
-  console.log(`누락된 감소     : ${lostUpdates}건  ← Lost Update`);
-  console.log('----------------------------------------');
-  console.log('사용자별 구매 성공 건수:');
-
-  const byMember = item.purchaseAttemptsByMember;
-  Object.keys(byMember).sort().forEach((nickname) => {
-    console.log(`  ${nickname}: ${byMember[nickname]}건`);
-  });
-
-  console.log('========================================');
-
-  if (lostUpdates > 0) {
-    console.log(`⚠️  동시성 문제 발생! ${lostUpdates}건의 재고 감소가 유실됨`);
-  } else {
-    console.log('✅ 동시성 문제 없음');
-  }
 }
